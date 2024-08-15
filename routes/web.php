@@ -18,6 +18,9 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     Route::resource('results', ResultController::class);
+    Route::get('/new-comparison', function () {
+        return redirect()->route('results.create');
+    });
 });
 
 require __DIR__ . '/auth.php';
