@@ -3,10 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\Result;
+use App\Traits\Aspose;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class ResultController extends Controller
 {
+    use Aspose;
     /**
      * Display a listing of the resource.
      */
@@ -30,6 +33,19 @@ class ResultController extends Controller
     public function store(Request $request)
     {
         //
+        if (!$request->has('files')) {
+            return redirect()->with('message', 'No file uploaded');
+        }
+
+        $files = $request->file('files');
+        $paths = [];
+
+        foreach ($request->file('files') as $file) {
+            $path = $file->store('uploaded-files', ['disk' => 'public_uploads']);
+            array_push($paths, $path);
+        }
+        $results = $this->example($paths);
+        return redirect()->back()->with('message', 'Files uploaded successfully');
     }
 
     /**
