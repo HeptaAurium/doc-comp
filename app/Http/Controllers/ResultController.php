@@ -3,13 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\Result;
-use App\Traits\Aspose;
+use App\Traits\Doc;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
 class ResultController extends Controller
 {
-    use Aspose;
+    use Doc;
     /**
      * Display a listing of the resource.
      */
@@ -33,6 +33,7 @@ class ResultController extends Controller
     public function store(Request $request)
     {
         //
+        $data = [];
         if (!$request->has('files')) {
             return redirect()->with('message', 'No file uploaded');
         }
@@ -40,12 +41,22 @@ class ResultController extends Controller
         $files = $request->file('files');
         $paths = [];
 
+
         foreach ($request->file('files') as $file) {
-            $path = $file->store('uploaded-files', ['disk' => 'public_uploads']);
+            $path = [];
+            $f = fopen($file, 'rb');
+            $contents = fread($f, filesize($file));
+            $path['word_count'] = str_word_count($contents);
+            $path['string_count'] = strlen($contents);
+            $path['file'] = $file->store('uploaded-files', ['disk' => 'public_uploads']);
+            $path['file_extension'] = $file->getClientOriginalExtension();
+            $path['file_name'] = $file->getClientOriginalName();
+            $path['file_size'] = $file->getSize() / 1024;
             array_push($paths, $path);
         }
-        $results = $this->example($paths);
-        return redirect()->back()->with('message', 'Files uploaded successfully');
+        $data['paths'] = $paths;
+        $data['similarity'] = $this->get_similarity($paths);
+        return view('result.index', $data);
     }
 
     /**
